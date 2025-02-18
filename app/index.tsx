@@ -113,40 +113,23 @@ const Page = () => {
     setError(null);
   };
 
-  const downloadDriveVideo = async () => {
+  const downloadPrivateDriveVideo = async (apiKey: string) => {
+    const match = videoUrl.match(/\/d\/([^/]+)\//);
+    if (!match) throw new Error("Invalid Google Drive URL");
+
+    const fileId = match[1];
+
+    const downloadUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}`;
+
     try {
-      // Extract the file ID from the Google Drive URL
-      const match = videoUrl.match(/\/d\/(.+?)\//);
-      if (!match) {
-        throw new Error("Invalid Google Drive URL");
-      }
-      const fileId = match[1];
-
-      // Construct direct download URL
-      const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-
-      // Fetch the file
       const response = await fetch(downloadUrl);
-      if (!response.ok) {
-        throw new Error("Failed to download video");
-      }
+      if (!response.ok) throw new Error("Failed to download video");
 
-      // Convert response to blob
       const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
 
-      // Create a download link
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "video.mp4"; // You can modify this
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      console.log("Download successful");
+      setVideo(new File([blob], "downloaded_video.mp4", { type: blob.type }));
     } catch (error) {
-      console.error("Error downloading video:", error);
+      console.error("Download Error:", error);
     }
   };
 
@@ -195,7 +178,15 @@ const Page = () => {
               value={videoUrl}
               onChange={handleUrlChange}
             />
-            <Button onClick={downloadDriveVideo}>Download</Button>
+            <Button
+              onClick={() => {
+                downloadPrivateDriveVideo(
+                  "AIzaSyBPzfaigmE8lZnwah_N8eBFYX06Mm8RcCQ"
+                );
+              }}
+            >
+              Download
+            </Button>
           </div>
         </TabsContent>
       </Tabs>
